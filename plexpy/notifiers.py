@@ -33,6 +33,7 @@ from urllib import urlencode
 import urllib2
 from urlparse import urlparse
 import uuid
+import ssl
 
 import gntp.notifier
 import facebook
@@ -620,8 +621,8 @@ def send_notification(agent_id, subject, body, notify_action, **kwargs):
 
 class PrettyMetadata(object):
     def __init__(self, metadata):
-    	self.metadata = metadata
-    	self.media_type = metadata['media_type']
+        self.metadata = metadata
+        self.media_type = metadata['media_type']
 
     def get_poster_url(self):
         self.poster_url = self.metadata.get('poster_url','')
@@ -927,7 +928,7 @@ class XBMC(object):
                 return False
 
         return True
-        
+
     def return_config_options(self):
         config_option = [{'label': 'XBMC Host:Port',
                           'value': self.hosts,
@@ -1010,7 +1011,7 @@ class Plex(object):
             except Exception:
                 logger.warn(u"PlexPy Notifiers :: Plex Home Theater notification failed.")
                 return False
-                
+
         return True
 
     def return_config_options(self):
@@ -1119,11 +1120,11 @@ class PUSHBULLET(object):
         elif self.channel_tag:
             data['channel_tag'] = self.channel_tag
 
-        http_handler = HTTPSConnection("api.pushbullet.com")
+        http_handler = HTTPSConnection("api.pushbullet.com", context=ssl._create_unverified_context())
         http_handler.request("POST",
                              "/v2/pushes",
                              headers={'Content-type': "application/json",
-                             'Authorization': 'Basic %s' % base64.b64encode(self.apikey + ":")},
+                             'Access-Token': "%s" %(self.apikey)},
                              body=json.dumps(data))
 
         response = http_handler.getresponse()
@@ -1152,10 +1153,10 @@ class PUSHBULLET(object):
 
     def get_devices(self):
         if self.apikey:
-            http_handler = HTTPSConnection("api.pushbullet.com")
+            http_handler = HTTPSConnection("api.pushbullet.com", context=ssl._create_unverified_context())
             http_handler.request("GET", "/v2/devices",
                                  headers={'Content-type': "application/json",
-                                 'Authorization': 'Basic %s' % base64.b64encode(self.apikey + ":")})
+                                 'Access-Token': "%s" % self.apikey})
 
             response = http_handler.getresponse()
             request_status = response.status
